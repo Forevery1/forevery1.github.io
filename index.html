@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>排班表</title>
+    <link rel="stylesheet" type="text/css" href="css/index.css"/>
+    <link rel="stylesheet" href="https://at.alicdn.com/t/font_234130_nem7eskcrkpdgqfr.css">
+    <style>
+        .myBtn {
+            margin: 5% 20%;
+            width: 120px;
+            height: 35px;
+            border-radius: 10px;
+            text-align: center;
+            line-height: 33px;
+            cursor: pointer;
+        }
+
+        input {
+            background-color: #fff;
+            background-position: right 8px center;
+            background-repeat: no-repeat;
+            border: 1px solid #d1d5da;
+            border-radius: 3px;
+            box-shadow: inset 0 1px 2px rgba(27, 31, 35, .075);
+            color: #24292e;
+            font-size: 13px;
+            line-height: 20px;
+            outline: none;
+            padding: 6px 8px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+<div class="index_frame_leftBottom">
+    <br>
+    <form style="width: 300px;margin-left: 17%">
+        <div class="">
+            <label for="start">白班</label>
+            <input type="text" class="layui-input" id="start" placeholder="电子邮件/手机号/用户名">
+        </div>
+        <br>
+        <div class="form-group">
+            <label for="count">次数</label>
+            <input type="number" class="form-control" id="count" placeholder="">
+        </div>
+        <div class="zc_day myBtn" onclick="run()">计算（*＾-＾*）</div>
+    </form>
+    <div class="index_liTLeft">
+        <div class="index_liTline"></div>
+    </div>
+    <div class="index_liTRight">
+        <div class="index_liTline"></div>
+    </div>
+</div>
+<div class="index_frame_leftTop">
+    <div class="index_liBLeft"></div>
+    <div class="index_liBRight"></div>
+    <div id='schedule-boxS'></div>
+    <div class="index_liTLeft">
+        <div class="index_liTline"></div>
+    </div>
+    <div class="index_liTRight">
+        <div class="index_liTline"></div>
+    </div>
+</div>
+
+<div class="index_frame_leftBottom">
+    <div class="index_liBLeft"></div>
+    <div class="index_liBRight"></div>
+    <div class="index_frame_leftBottom_Top clearfix">
+        <div>
+            <div id="attendance1" style="width: 100%;height: 145px;"></div>
+            <span>休息</span>
+        </div>
+
+        <div>
+            <div id="attendance3" style="width: 100%;height: 145px;"></div>
+            <span>白班</span>
+        </div>
+
+        <div>
+            <div id="attendance4" style="width: 100%;height: 145px;"></div>
+            <span>夜班</span>
+        </div>
+    </div>
+</div>
+
+<script src="js/index.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/schedule.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdn.bootcss.com/echarts/4.2.0-rc.2/echarts.simple.min.js" type="text/javascript"
+        charset="utf-8"></script>
+<script>
+    /**
+     * 日期月份/天的显示，如果是1位数，则在前面加上'0'
+     * @param arg 日期月份/天的显示
+     */
+    function getFormatDate(arg) {
+        if (arg === undefined || arg === '') {
+            return '';
+        }
+        let re = arg + '';
+        if (re.length < 2) {
+            re = '0' + re;
+        }
+        return re;
+    }
+
+    /**
+     * 在原有日期基础上，增加days天数
+     * @param mDate 原有日期
+     * @param days 增加天数
+     */
+    function addDate(mDate, days) {
+        if (days === undefined || days === '') {
+            days = 1;
+        }
+        let date = new Date(mDate);
+        date.setDate(date.getDate() + days);
+        let month = date.getMonth() + 1;
+        let day = date.getDate();
+        return date.getFullYear() + '-' + getFormatDate(month) + '-' + getFormatDate(day);
+    }
+
+    /**
+     * 白班
+     * @param start 第一个白班日期
+     * @param count 排多少天
+     */
+    function whiteShift(start, count) {
+        let data = [];
+        for (let index = 1; index <= count; index++) {
+            data.push({time: start});
+            start = addDate(start, 4);
+        }
+        return data;
+    }
+
+    /**
+     * 夜班
+     * @param start 第一个白班日期
+     * @param count 排多少天
+     */
+    function nightShift(start, count) {
+        let data = [];
+        start = addDate(start, 1);
+        for (let index = 1; index <= count; index++) {
+            data.push({time: start});
+            start = addDate(start, 4);
+        }
+        return data;
+    }
+
+    /**
+     * 休息
+     * @param start 第一个白班日期
+     * @param count 排多少天
+     */
+    function rest(start, count) {
+        let data = [];
+        start = addDate(start, 2);
+        for (let index = 1; index <= count; index++) {
+            data.push({time: start});
+            start = addDate(start, 1);
+            data.push({time: start});
+            start = addDate(start, 3);
+        }
+        return data;
+    }
+
+</script>
+<script type="text/javascript">
+
+    document.getElementById('start').value = '2019-06-02';
+    document.getElementById('count').value = 30;
+
+    function run() {
+        let count = document.getElementById('count').value;
+        let start = document.getElementById('start').value;
+        new Schedule({
+            el: '#schedule-boxS',
+            //夜班
+            qqDate: nightShift(start, count),
+            //白班
+            zcDate: whiteShift(start, count),
+            //休息
+            nDate: rest(start, count)
+        });
+    }
+
+    run();
+</script>
+</body>
+</html>
